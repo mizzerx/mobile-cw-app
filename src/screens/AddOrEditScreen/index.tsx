@@ -7,6 +7,9 @@ import React, { useCallback, useEffect, useLayoutEffect } from 'react';
 import {
   Alert,
   Image,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   ScrollView,
   StyleSheet,
   Text,
@@ -60,6 +63,7 @@ const AddOrEditScreen = () => {
         setData({
           ...data[0],
           monthlyRentPrice: data[0].monthlyRentPrice.toString(),
+          bedrooms: data[0].bedrooms.toString(),
         });
       });
     }
@@ -82,22 +86,6 @@ const AddOrEditScreen = () => {
   const showDatePickerHandler = useCallback((currentMode: 'date' | 'time') => {
     setShowDatePicker(true);
     setMode(currentMode);
-  }, []);
-
-  const pickImage = useCallback(async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!result.cancelled) {
-      setData({
-        ...data,
-        image: result.uri,
-      });
-    }
   }, []);
 
   const onSubmit = async () => {
@@ -197,7 +185,10 @@ const AddOrEditScreen = () => {
 
   return (
     <>
-      <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={100}>
         <MainHeaderTitle
           title={
             type === 'add'
@@ -246,22 +237,48 @@ const AddOrEditScreen = () => {
               }}
               value={data.dateTime}
             />
-            <View style={styles.twoButton}>
-              <TouchableHighlight
-                style={styles.outlineButton}
-                onPress={() => {
-                  showDatePickerHandler('date');
-                }}>
-                <Text style={styles.setText}>{'Set Date'}</Text>
-              </TouchableHighlight>
-              <View style={styles.verticalLine} />
-              <TouchableHighlight
-                style={styles.outlineButton}
-                onPress={() => {
-                  showDatePickerHandler('time');
-                }}>
-                <Text style={styles.setText}>{'Set Time'}</Text>
-              </TouchableHighlight>
+            <View style={{ flexDirection: 'row' }}>
+              {showDatePicker && (
+                <DateTimePicker
+                  timeZoneOffsetInMinutes={0}
+                  value={date}
+                  mode={mode as any}
+                  is24Hour={true}
+                  display='default'
+                  onChange={(event: any, selectedDate: any) => {
+                    const currentDate = selectedDate || date;
+                    setShowDatePicker(false);
+                    setDate(currentDate);
+                    setData({
+                      ...data,
+                      dateTime: formatDateAndTime(currentDate),
+                    });
+                  }}
+                  style={{
+                    width: '100%',
+                    position: 'absolute',
+                    marginRight: 16,
+                    right: 0,
+                  }}
+                />
+              )}
+              <View style={styles.twoButton}>
+                <TouchableHighlight
+                  style={styles.outlineButton}
+                  onPress={() => {
+                    showDatePickerHandler('date');
+                  }}>
+                  <Text style={styles.setText}>{'Set Date'}</Text>
+                </TouchableHighlight>
+                <View style={styles.verticalLine} />
+                <TouchableHighlight
+                  style={styles.outlineButton}
+                  onPress={() => {
+                    showDatePickerHandler('time');
+                  }}>
+                  <Text style={styles.setText}>{'Set Time'}</Text>
+                </TouchableHighlight>
+              </View>
             </View>
           </View>
           <MainTextInput
@@ -293,6 +310,7 @@ const AddOrEditScreen = () => {
                       text: 'Choose',
                       onPress: () => {
                         setShowPicker(true);
+                        Keyboard.dismiss();
                       },
                     },
                     {
@@ -307,18 +325,20 @@ const AddOrEditScreen = () => {
               }}
             />
             {showPicker && (
-              <Picker
-                style={styles.picker}
-                selectedValue={data.furnitureTypes}
-                onValueChange={value => {
-                  setData({ ...data, furnitureTypes: value });
-                  setShowPicker(false);
-                }}>
-                <Picker.Item label={'No choice'} value={''} />
-                <Picker.Item label='Furnished' value='furnished' />
-                <Picker.Item label='Unfurnished' value='unfurnished' />
-                <Picker.Item label='Semi-furnished' value='semi-furnished' />
-              </Picker>
+              <View style={styles.pickerContainer}>
+                <Picker
+                  style={styles.picker}
+                  selectedValue={data.furnitureTypes}
+                  onValueChange={value => {
+                    setData({ ...data, furnitureTypes: value });
+                    setShowPicker(false);
+                  }}>
+                  <Picker.Item label={'No choice'} value={''} />
+                  <Picker.Item label='Furnished' value='furnished' />
+                  <Picker.Item label='Unfurnished' value='unfurnished' />
+                  <Picker.Item label='Semi-furnished' value='semi-furnished' />
+                </Picker>
+              </View>
             )}
           </View>
           <MainTextInput
@@ -328,6 +348,9 @@ const AddOrEditScreen = () => {
               setData({ ...data, notes });
             }}
             value={data.notes}
+            multiline
+            numberOfLines={10}
+            style={{ height: 100 }}
           />
           <MainTextInput
             placeholder={'Enter name of reporter'}
@@ -347,8 +370,19 @@ const AddOrEditScreen = () => {
             <View style={styles.imgPickBtn}>
               <TouchableOpacity
                 style={[styles.outlineButton, { height: 50 }]}
-                onPress={() => {
-                  pickImage();
+                onPress={async () => {
+                  const result = await ImagePicker.launchImageLibraryAsync({
+                    mediaTypes: ImagePicker.MediaTypeOptions.All,
+                    aspect: [4, 3],
+                    quality: 1,
+                  });
+
+                  if (!result.cancelled) {
+                    setData({
+                      ...data,
+                      image: result.uri,
+                    });
+                  }
                 }}>
                 <Text style={styles.setText}>{'Pick Image'}</Text>
               </TouchableOpacity>
@@ -379,23 +413,7 @@ const AddOrEditScreen = () => {
           disabled={!valid}
           onPress={onSubmit}
         />
-      </View>
-      {showDatePicker && (
-        <DateTimePicker
-          testID='dateTimePicker'
-          timeZoneOffsetInMinutes={0}
-          value={date}
-          mode={mode as any}
-          is24Hour={true}
-          display='default'
-          onChange={(event: any, selectedDate: any) => {
-            const currentDate = selectedDate || date;
-            setShowDatePicker(false);
-            setDate(currentDate);
-            setData({ ...data, dateTime: formatDateAndTime(currentDate) });
-          }}
-        />
-      )}
+      </KeyboardAvoidingView>
       <LoadingOverlay visible={isLoading} />
     </>
   );
@@ -406,6 +424,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     padding: 16,
+    marginBottom: 16,
   },
   disabledButton: {
     backgroundColor: '#ccc',
@@ -435,10 +454,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   picker: {
-    width: '100%',
-    paddingHorizontal: 16,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    marginLeft: 16,
   },
   pickImageContainer: {
     flexDirection: 'row',
@@ -476,6 +492,12 @@ const styles = StyleSheet.create({
   imgPickBtn: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  pickerContainer: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    borderRadius: 8,
+    marginHorizontal: 16,
   },
 });
 

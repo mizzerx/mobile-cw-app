@@ -37,6 +37,8 @@ const HomeScreen = () => {
   const animatedRightValue = useRef(new Animated.Value(0)).current;
   const [crrIndex, setCrrIndex] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [crrFilter, setCrrFilter] =
+    React.useState<keyof DataType>('propertyType');
 
   const leftTranslateX = animatedLefValue.interpolate({
     inputRange: [0, 1],
@@ -86,7 +88,10 @@ const HomeScreen = () => {
       }
 
       const result = data?.filter(item => {
-        return item.propertyType.toLowerCase().includes(keyword.toLowerCase());
+        return item[crrFilter]
+          ?.toString()
+          .toLowerCase()
+          .includes(keyword.toLowerCase());
       });
 
       if (result) {
@@ -193,7 +198,7 @@ const HomeScreen = () => {
               resetAnimation();
               item.id && onDelete(item.id);
             }}>
-            <Text>{'Delete'}</Text>
+            <Text style={styles.optionText}>{'Delete'}</Text>
           </TouchableHighlight>
           <TouchableHighlight
             style={styles.editBox}
@@ -204,7 +209,7 @@ const HomeScreen = () => {
                 id: item.id?.toString(),
               });
             }}>
-            <Text>{'Edit'}</Text>
+            <Text style={styles.optionText}>{'Edit'}</Text>
           </TouchableHighlight>
           <Animated.View
             style={[
@@ -221,6 +226,10 @@ const HomeScreen = () => {
               <View style={{ flexDirection: 'row' }}>
                 <Text style={styles.reporter}>{'Reporter: '}</Text>
                 <Text style={styles.reporterText}>{item.reporterName}</Text>
+              </View>
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={styles.reporter}>{'Bedrooms: '}</Text>
+                <Text style={styles.reporterText}>{item.bedrooms}</Text>
               </View>
             </View>
             <View>
@@ -258,7 +267,37 @@ const HomeScreen = () => {
           title={'Welcome to RentalZ'}
           subTitle={'Your record rental properties will show below.'}
         />
-        <MainSearchBox placeholder={'Search'} onChangeText={onSearch} />
+        <MainSearchBox
+          placeholder={'Search'}
+          onChangeText={onSearch}
+          onSelect={val => {
+            setCrrFilter(val as keyof DataType);
+          }}
+          filter
+          filterFields={[
+            {
+              label: 'Property Type',
+              value: 'propertyType',
+            },
+            {
+              label: 'Reporter',
+              value: 'reporterName',
+            },
+            {
+              label: 'Bedrooms',
+              value: 'bedrooms',
+            },
+            {
+              label: 'Monthly Rent Price',
+              value: 'monthlyRentPrice',
+            },
+            {
+              label: 'Date Time',
+              value: 'dateTime',
+            },
+          ]}
+          defaultValue={'propertyType'}
+        />
         <ScrollView style={styles.bodyContainer}>
           {data ? (
             data.map((item, index) => renderItem({ item, index }))
@@ -414,6 +453,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     width: 100,
+  },
+  optionText: {
+    fontSize: 16,
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 

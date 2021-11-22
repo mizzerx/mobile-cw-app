@@ -4,18 +4,22 @@ import {
   useRoute,
 } from '@react-navigation/core';
 import React, { useLayoutEffect } from 'react';
-import { Alert, Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  Alert,
+  Image,
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { DB_NAME } from '../../App';
 import LoadingOverlay from '../../components/LoadingOverlay';
 import MainButton from '../../components/MainButton';
 import MainHeaderTitle from '../../components/MainHeaderTitle';
 import MainTextInput from '../../components/MainTextInput';
-import {
-  DataType,
-  getOneData,
-  updateData,
-  updateOneField,
-} from '../../database/propertyDto';
+import { DataType, getOneData, updateData } from '../../database/propertyDto';
 import { MainRoutes } from '../../routing';
 import { MainRouteProp, MainStackNavigationProp } from '../../routing/types';
 
@@ -30,9 +34,10 @@ const DetailScreen = () => {
     monthlyRentPrice: '',
     reporterName: '',
   });
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const fetchData = async () => {
+    // setIsLoading(true);
     try {
       const data = await getOneData(DB_NAME, id);
       setIsLoading(false);
@@ -87,12 +92,15 @@ const DetailScreen = () => {
 
   return (
     <>
-      <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        keyboardVerticalOffset={100}>
         <MainHeaderTitle
           title={`Details of Property ${id}`}
           subTitle={'You can add more description at the end of details.'}
         />
-        <ScrollView>
+        <ScrollView contentContainerStyle={{ paddingBottom: 16 }}>
           <View style={styles.imageContainer}>
             {data?.image && data.image.length > 0 ? (
               <Image
@@ -105,30 +113,30 @@ const DetailScreen = () => {
               <Text>No image</Text>
             )}
           </View>
-          <View>
-            {renderItem('Reporter', data?.reporterName!)}
-            {renderItem('Properties Type', data?.propertyType!)}
-            {renderItem('Monthly Rent Price', data?.monthlyRentPrice!)}
-            {renderItem('Bedrooms', data?.bedrooms!)}
-            {renderItem('Date&Time', data?.dateTime!)}
-            {renderItem('Furniture Types', data?.furnitureTypes!)}
-            {renderItem('Notes', data?.notes!)}
-            <MainTextInput
-              placeholder={'Enter description'}
-              label={'Description'}
-              multiline={true}
-              value={data?.description}
-              onChangeText={text => {
-                setData({
-                  ...data,
-                  description: text,
-                });
-              }}
-            />
-          </View>
+
+          {renderItem('Reporter', data?.reporterName!)}
+          {renderItem('Properties Type', data?.propertyType!)}
+          {renderItem('Monthly Rent Price', data?.monthlyRentPrice!)}
+          {renderItem('Bedrooms', data?.bedrooms!)}
+          {renderItem('Date&Time', data?.dateTime!)}
+          {renderItem('Furniture Types', data?.furnitureTypes!)}
+          {renderItem('Notes', data?.notes!)}
+          <MainTextInput
+            placeholder={'Enter description'}
+            label={'Description'}
+            multiline={true}
+            value={data?.description}
+            onChangeText={text => {
+              setData({
+                ...data,
+                description: text,
+              });
+            }}
+            style={{ height: 200 }}
+          />
         </ScrollView>
         <MainButton buttonText={'Save'} fontSize={16} onPress={handleSave} />
-      </View>
+      </KeyboardAvoidingView>
       <LoadingOverlay visible={isLoading} />
     </>
   );
