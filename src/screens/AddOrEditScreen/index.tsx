@@ -245,9 +245,9 @@ const AddOrEditScreen = () => {
                   mode={mode as any}
                   is24Hour={true}
                   display='default'
-                  onChange={(event: any, selectedDate: any) => {
+                  onChange={(_event: any, selectedDate: any) => {
                     const currentDate = selectedDate || date;
-                    setShowDatePicker(false);
+                    setShowDatePicker(Platform.OS === 'ios');
                     setDate(currentDate);
                     setData({
                       ...data,
