@@ -240,7 +240,7 @@ const AddOrEditScreen = () => {
             <View style={{ flexDirection: 'row' }}>
               {showDatePicker && (
                 <DateTimePicker
-                  timeZoneOffsetInMinutes={0}
+                  timeZoneOffsetInMinutes={7 * 60}
                   value={date}
                   mode={mode as any}
                   is24Hour={true}
@@ -267,6 +267,7 @@ const AddOrEditScreen = () => {
                   style={styles.outlineButton}
                   onPress={() => {
                     showDatePickerHandler('date');
+                    setData({ ...data, dateTime: formatDateAndTime(date) });
                   }}>
                   <Text style={styles.setText}>{'Set Date'}</Text>
                 </TouchableHighlight>
@@ -275,6 +276,7 @@ const AddOrEditScreen = () => {
                   style={styles.outlineButton}
                   onPress={() => {
                     showDatePickerHandler('time');
+                    setData({ ...data, dateTime: formatDateAndTime(date) });
                   }}>
                   <Text style={styles.setText}>{'Set Time'}</Text>
                 </TouchableHighlight>
